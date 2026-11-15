@@ -4,7 +4,7 @@ import L from "leaflet";
 import { MapContainer, Marker, TileLayer } from "react-leaflet";
 import { categoryInfo, scoreColor, type Place } from "@/lib/types";
 
-const [centerLat, centerLng] = (process.env.NEXT_PUBLIC_MAP_CENTER ?? "30.0277,31.2101")
+const [centerLat, centerLng] = (process.env.NEXT_PUBLIC_MAP_CENTER ?? "30.064554,31.2788107")
   .split(",")
   .map(Number);
 const zoom = Number(process.env.NEXT_PUBLIC_MAP_ZOOM ?? 17);
