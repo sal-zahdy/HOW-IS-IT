@@ -1,36 +1,51 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Campus Map
 
-## Getting Started
+A mobile-first map of the college of engineering where students find and rate bathrooms, chill spots, cafeterias and halls.
 
-First, run the development server:
+- **App:** Next.js (App Router) + Tailwind
+- **Map:** Leaflet with OpenStreetMap tiles
+- **Backend:** Supabase (Postgres, auth by email magic link, auto REST API, row-level security, storage)
+- **Hosting:** Vercel
+
+## How it works
+
+Each place is a pin coloured by its rating (green 4+, yellow 3+, red below 3, grey unrated), using the last 30 days when there are recent ratings. Anyone can browse. Signed-in students leave one rating per place (overall plus a few category-specific scores and an optional comment) and can edit it later.
+
+Schema, security rules and seed criteria live in [`supabase/migrations`](supabase/migrations). Tables: `buildings`, `places`, `category_criteria`, `profiles`, `ratings`, `rating_reports`, plus the `place_stats` view.
+
+## Set up
+
+1. Create a Supabase project, then link and push the schema:
+   ```bash
+   npx supabase login
+   npx supabase link --project-ref <your-project-ref>
+   npx supabase db push
+   ```
+2. In Supabase, go to **Authentication > URL Configuration** and add `https://<your-site>/auth/callback` (and `http://localhost:3000/auth/callback`) to the redirect URLs.
+3. Copy `.env.example` to `.env.local` and fill in the Supabase URL and anon key, your campus centre, and optionally the allowed email domain.
+4. Run it:
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+### Local Supabase (optional, needs Docker)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npx supabase start      # local Postgres, auth and API
+npx supabase db reset   # applies migrations and supabase/seed.sql sample places
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Adding places and admins
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+New places start as `pending`. To make someone an admin, run in the Supabase SQL editor:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```sql
+update public.profiles set role = 'admin' where id = (select id from auth.users where email = 'you@example.com');
+```
 
-## Learn More
+Admins can then insert, approve (`status = 'approved'`) or hide places from the Supabase table editor.
 
-To learn more about Next.js, take a look at the following resources:
+## Deploy
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Import the repo in Vercel, add the same environment variables, and deploy. Every push to `main` redeploys.
